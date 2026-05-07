@@ -136,4 +136,76 @@ final_data <- internet_data_clean |>
 final_data
 ```
 
+```{r}
+library(httr2)
+library(xml2)
+library(tidyverse)
+
+req <- request("https://api.worldbank.org/v2/country/all/indicator/NY.GDP.MKTP.CD") |>
+  req_url_query(
+    date = "1995", 
+    per_page = 32500
+  )
+resp <- req |> req_perform()
+xml_data <- resp |> resp_body_xml()
+
+records <- xml_find_all(xml_data, "//*[local-name()='data' and *[local-name()='indicator']]")
+
+GDP_1995_df <- tibble(
+  country     = records |> xml_find_first(".//*[local-name()='country']") |> xml_text(),
+  country_iso = records |> xml_find_first(".//*[local-name()='countryiso3code']") |> xml_text(),
+  date        = records |> xml_find_first(".//*[local-name()='date']") |> xml_integer(),
+  value_1995       = records |> xml_find_first(".//*[local-name()='value']") |> xml_double(),
+  indicator   = records |> xml_find_first(".//*[local-name()='indicator']") |> xml_text()
+)
+
+print(GDP_1995_df)
+
+```
+```{r}
+library(httr2)
+library(xml2)
+library(tidyverse)
+
+req <- request("https://api.worldbank.org/v2/country/all/indicator/NY.GDP.MKTP.CD") |>
+  req_url_query(
+    date = "2023", 
+    per_page = 32500
+  )
+resp <- req |> req_perform()
+xml_data <- resp |> resp_body_xml()
+
+records <- xml_find_all(xml_data, "//*[local-name()='data' and *[local-name()='indicator']]")
+
+GDP_2023_df <- tibble(
+  country     = records |> xml_find_first(".//*[local-name()='country']") |> xml_text(),
+  country_iso = records |> xml_find_first(".//*[local-name()='countryiso3code']") |> xml_text(),
+  date        = records |> xml_find_first(".//*[local-name()='date']") |> xml_integer(),
+  value_2023       = records |> xml_find_first(".//*[local-name()='value']") |> xml_double(),
+  indicator   = records |> xml_find_first(".//*[local-name()='indicator']") |> xml_text()
+)
+
+print(GDP_2023_df)
+```
+```{r}
+  Changed_GDP <- GDP_1995_df |>
+  left_join(GDP_2023_df, by = c("country_iso"))
+  view(Changed_GDP)
+```
+```{r}
+  Changed_GDP_Average <- Changed_GDP |>
+    mutate(
+      change_in_gdp = value_2023 - value_1995,
+      average_change = change_in_gdp / 28
+    )
+  view(Changed_GDP_Average)
+```
+
+```{r}
+  top_avg_growth_df <- Changed_GDP_Average |>
+    arrange(desc(average_change))
+  
+  top_20_avg_gdp_growth_df <- head(top_avg_growth_df, 20)
+  head(top_20_avg_gdp_growth_df, 20)
+```
 
