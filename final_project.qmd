@@ -47,8 +47,18 @@ print(GDP_growth_df)
 top_growth_df <- GDP_growth_df |>
   arrange(desc(value))
 
-head(top_growth_df, 5)
+top_20_gdp_growth_df <- head(top_growth_df, 20)
+glimpse(top_20_gdp_growth_df)
 ```
+
+```{r}
+bottom_growth_df <- GDP_growth_df |>
+  arrange(value)
+
+bottom_20_gdp_growth_df <- head(bottom_growth_df, 20)
+glimpse(bottom_20_gdp_growth_df)
+```
+
 
 ```{r}
 library(httr2)
@@ -125,3 +135,5 @@ final_data <- internet_data_clean |>
 
 final_data
 ```
+
+
