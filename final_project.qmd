@@ -15,10 +15,6 @@ To answer this question, we will integrate data from the online dataset [Share o
 
 The workflow for this project will include: cleaning the internet access data from the CSV, and conducting statistical analyses to investigate the correlation between internet access and GDP growth over time. Possible hurdles that we might encounter could be misalignment between the CSV data and the data found in the API, missing data for some countries, and having to filter through the API data, which is very large.
 
-
-
-
-
 ## Fetching the GDP Data from the World Bank API
 
 ```{r}
@@ -87,4 +83,23 @@ top_GDP_per_person_df <- GDP_per_person_df |>
 head(top_GDP_per_person_df, 5)
 ```
 
+## Internet Access CSV Cleaning/ Exploration
 
+```{r}
+library(tidyverse)
+#read csv
+internet_data <- read.csv("share-of-individuals-using-the-internet.csv")
+#clean dataset
+internet_data_clean <- internet_data %>%
+  #rename columns
+  rename(
+    country = Entity,
+    country_code = Code,
+    year = Year,
+    internet_usage_share = Share.of.the.population.using.the.Internet,
+  ) %>%
+  #drop rows with missing values 
+  drop_na(internet_usage_share) %>%
+  # keep only years after 1995
+  filter(year >= 1995, year <= 2024)
+```
