@@ -114,7 +114,8 @@ internet_data_clean %>%
     title = "Distribution of Internet Usage Across Countries Over Time",
     x = "Year",
     y = "Internet Usage (%)"
-  )
+  ) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
 
 ```{r}
