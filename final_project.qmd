@@ -27,7 +27,10 @@ library(xml2)
 library(tidyverse)
 
 req <- request("https://api.worldbank.org/v2/country/all/indicator/NY.GDP.MKTP.KD.ZG") |>
-  req_url_query(date = "2024", per_page = 300)
+  req_url_query(
+    date = "1995:2023", 
+    per_page = 32500
+  )
 resp <- req |> req_perform()
 xml_data <- resp |> resp_body_xml()
 
@@ -57,7 +60,10 @@ library(xml2)
 library(tidyverse)
 
 req <- request("https://api.worldbank.org/v2/country/all/indicator/SL.GDP.PCAP.EM.KD") |>
-  req_url_query(date = "2024", per_page = 300)
+  req_url_query(
+    date = "1995:2023", 
+    per_page = 32500
+  )
 resp <- req |> req_perform()
 xml_data <- resp |> resp_body_xml()
 
