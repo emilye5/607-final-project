@@ -94,7 +94,7 @@ internet_data_clean <- internet_data %>%
   #rename columns
   rename(
     country = Entity,
-    country_code = Code,
+    country_iso = Code,
     date = Year,
     internet_usage_share = Share.of.the.population.using.the.Internet,
   ) %>%
