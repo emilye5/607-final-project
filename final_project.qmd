@@ -100,6 +100,6 @@ internet_data_clean <- internet_data %>%
   ) %>%
   #drop rows with missing values 
   drop_na(internet_usage_share) %>%
-  # keep only years after 1995
+  # keep only years after 1995 and before 2024
   filter(year >= 1995, year <= 2024)
 ```
