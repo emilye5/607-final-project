@@ -102,6 +102,4 @@ internet_data_clean <- internet_data %>%
   drop_na(internet_usage_share) %>%
   # keep only years after 1995 and before 2024
   filter(year >= 1995, year < 2024)
-#look at data
-glimpse(internet_data_clean)
 ```
