@@ -95,11 +95,19 @@ internet_data_clean <- internet_data %>%
   rename(
     country = Entity,
     country_code = Code,
-    year = Year,
+    date = Year,
     internet_usage_share = Share.of.the.population.using.the.Internet,
   ) %>%
   #drop rows with missing values 
   drop_na(internet_usage_share) %>%
   # keep only years after 1995 and before 2024
-  filter(year >= 1995, year < 2024)
+  filter(date >= 1995, date < 2024)
+```
+
+```{r}
+final_data <- internet_data_clean |>
+  left_join(GDP_per_person_df, by = c("country_iso", "date")) |>
+  left_join(GDP_growth_df, by = c("country_iso", "date"))
+
+final_data
 ```
