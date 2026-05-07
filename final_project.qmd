@@ -14,3 +14,69 @@ For this project, we want to investigate the relationship between internet acces
 To answer this question, we will integrate data from the online dataset [Share of the population using the Internet](https://ourworldindata.org/grapher/share-of-individuals-using-the-internet) (CSV file). Economic indicators, including GDP (USD) and GDP growth over time, will be retrieved through the [World Bank Indicators API](https://datahelpdesk.worldbank.org/knowledgebase/articles/889392-about-the-indicators-api-documentation), which provides JSON/XML data for all countries. Our motivation for doing this project is to see if, in a world where digital connectivity has become essential for education, commerce, and innovation, whether unequal access to the internet reinforces existing economic inequalities. By analyzing long‑term trends in internet usage alongside GDP growth, this project aims to quantify how strongly digital access correlates with national economic performance.
 
 The workflow for this project will include: cleaning the internet access data from the CSV, and conducting statistical analyses to investigate the correlation between internet access and GDP growth over time. Possible hurdles that we might encounter could be misalignment between the CSV data and the data found in the API, missing data for some countries, and having to filter through the API data, which is very large.
+
+
+
+
+
+## Fetching the GDP Data from the World Bank API
+
+```{r}
+library(httr2)
+library(xml2)
+library(tidyverse)
+
+req <- request("https://api.worldbank.org/v2/country/all/indicator/NY.GDP.MKTP.KD.ZG?date=2024")
+resp <- req |> req_perform()
+xml_data <- resp |> resp_body_xml()
+
+records <- xml_find_all(xml_data, "//*[local-name()='data' and *[local-name()='indicator']]")
+
+GDP_growth_df <- tibble(
+  country     = records |> xml_find_first(".//*[local-name()='country']") |> xml_text(),
+  country_iso = records |> xml_find_first(".//*[local-name()='countryiso3code']") |> xml_text(),
+  date        = records |> xml_find_first(".//*[local-name()='date']") |> xml_integer(),
+  value       = records |> xml_find_first(".//*[local-name()='value']") |> xml_double(),
+  indicator   = records |> xml_find_first(".//*[local-name()='indicator']") |> xml_text()
+)
+
+print(GDP_growth_df)
+```
+
+```{r}
+top_growth_df <- GDP_growth_df |>
+  arrange(desc(value))
+
+head(top_growth_df, 5)
+```
+
+```{r}
+library(httr2)
+library(xml2)
+library(tidyverse)
+
+req <- request("https://api.worldbank.org/v2/country/all/indicator/SL.GDP.PCAP.EM.KD?date=2024")
+resp <- req |> req_perform()
+xml_data <- resp |> resp_body_xml()
+
+records <- xml_find_all(xml_data, "//*[local-name()='data' and *[local-name()='indicator']]")
+
+GDP_per_person_df <- tibble(
+  country     = records |> xml_find_first(".//*[local-name()='country']") |> xml_text(),
+  country_iso = records |> xml_find_first(".//*[local-name()='countryiso3code']") |> xml_text(),
+  date        = records |> xml_find_first(".//*[local-name()='date']") |> xml_integer(),
+  value       = records |> xml_find_first(".//*[local-name()='value']") |> xml_double(),
+  indicator   = records |> xml_find_first(".//*[local-name()='indicator']") |> xml_text()
+)
+
+print(GDP_per_person_df)
+```
+
+```{r}
+top_GDP_per_person_df <- GDP_per_person_df |>
+  arrange(desc(value))
+
+head(top_GDP_per_person_df, 5)
+```
+
+
