@@ -88,7 +88,7 @@ head(top_GDP_per_person_df, 5)
 ```{r}
 library(tidyverse)
 #read csv
-internet_data <- read.csv("share-of-individuals-using-the-internet.csv")
+internet_data <- read.csv("https://raw.githubusercontent.com/emilye5/607-final-project/refs/heads/main/share-of-individuals-using-the-internet.csv")
 #clean dataset
 internet_data_clean <- internet_data %>%
   #rename columns
@@ -101,5 +101,5 @@ internet_data_clean <- internet_data %>%
   #drop rows with missing values 
   drop_na(internet_usage_share) %>%
   # keep only years after 1995 and before 2024
-  filter(year >= 1995, year <= 2024)
+  filter(year >= 1995, year < 2024)
 ```
