@@ -15,10 +15,6 @@ To answer this question, we will integrate data from the online dataset [Share o
 
 The workflow for this project will include: cleaning the internet access data from the CSV, and conducting statistical analyses to investigate the correlation between internet access and GDP growth over time. Possible hurdles that we might encounter could be misalignment between the CSV data and the data found in the API, missing data for some countries, and having to filter through the API data, which is very large.
 
-
-
-
-
 ## Fetching the GDP Data from the World Bank API
 
 ```{r}
@@ -26,7 +22,11 @@ library(httr2)
 library(xml2)
 library(tidyverse)
 
-req <- request("https://api.worldbank.org/v2/country/all/indicator/NY.GDP.MKTP.KD.ZG?date=2024")
+req <- request("https://api.worldbank.org/v2/country/all/indicator/NY.GDP.MKTP.KD.ZG") |>
+  req_url_query(
+    date = "1995:2023", 
+    per_page = 32500
+  )
 resp <- req |> req_perform()
 xml_data <- resp |> resp_body_xml()
 
@@ -55,7 +55,11 @@ library(httr2)
 library(xml2)
 library(tidyverse)
 
-req <- request("https://api.worldbank.org/v2/country/all/indicator/SL.GDP.PCAP.EM.KD?date=2024")
+req <- request("https://api.worldbank.org/v2/country/all/indicator/SL.GDP.PCAP.EM.KD") |>
+  req_url_query(
+    date = "1995:2023", 
+    per_page = 32500
+  )
 resp <- req |> req_perform()
 xml_data <- resp |> resp_body_xml()
 
@@ -79,4 +83,44 @@ top_GDP_per_person_df <- GDP_per_person_df |>
 head(top_GDP_per_person_df, 5)
 ```
 
+## Internet Access CSV Cleaning/ Exploration
 
+```{r}
+library(tidyverse)
+#read csv
+internet_data <- read.csv("https://raw.githubusercontent.com/emilye5/607-final-project/refs/heads/main/share-of-individuals-using-the-internet.csv")
+#clean dataset
+internet_data_clean <- internet_data %>%
+  #rename columns
+  rename(
+    country = Entity,
+    country_iso = Code,
+    date = Year,
+    internet_usage_share = Share.of.the.population.using.the.Internet,
+  ) %>%
+  #drop rows with missing values 
+  drop_na(internet_usage_share) %>%
+  # keep only years after 1995 and before 2024
+  filter(date >= 1995, date < 2024)
+#take a look at the cleaned dataset
+glimpse(internet_data_clean)
+#check how many distinct countries are included in the data
+n_distinct(internet_data_clean$country)
+#boxplot showing the distribution of internet usage by year
+internet_data_clean %>%
+  ggplot(aes(x = factor(date), y = internet_usage_share)) +
+  geom_boxplot() +
+  labs(
+    title = "Distribution of Internet Usage Across Countries Over Time",
+    x = "Year",
+    y = "Internet Usage (%)"
+  )
+```
+
+```{r}
+final_data <- internet_data_clean |>
+  left_join(GDP_per_person_df, by = c("country_iso", "date")) |>
+  left_join(GDP_growth_df, by = c("country_iso", "date"))
+
+final_data
+```
