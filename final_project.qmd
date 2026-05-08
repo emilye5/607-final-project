@@ -291,9 +291,9 @@ correlation_data |>
 ```
 
 ```{r, fig.width=18, fig.height=10}
-selected_years <- c(1995, 2005, 2015, 2023)
-
 world <- ne_countries(scale = "medium", returnclass = "sf")
+
+selected_years <- c(1995, 2005, 2015, 2023)
 
 world_years <- world[rep(seq_len(nrow(world)), times = length(selected_years)), ]
 world_years$date <- rep(selected_years, each = nrow(world))
