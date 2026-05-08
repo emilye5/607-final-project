@@ -249,6 +249,13 @@ correlation_data <- internet_data_clean |>
   rename(country = country.x) |>  # resolve the .x/.y conflict after join
   drop_na(internet_usage_share, value)
 
+overall_cor <- cor(
+  correlation_data$internet_usage_share,
+  correlation_data$value,
+  method = "pearson",
+  use = "complete.obs"
+)
+
 country_correlations <- correlation_data |>
   group_by(country, country_iso) |>
   filter(n() >= 10) |>
