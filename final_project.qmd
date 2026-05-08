@@ -250,6 +250,48 @@ bottom_avg_gdp_growth_clean <- bottom_avg_growth_df %>%
 bottom_avg_gdp_growth_clean
 
 ```
+# Scatter plot: internet usage vs GDP growth (all countries, all years)
+
+```{r}
+
+correlation_data <- internet_data_clean |>
+  inner_join(GDP_growth_df, by = c("country_iso", "date")) |>
+  rename(country = country.x) |>  # resolve the .x/.y conflict after join
+  drop_na(internet_usage_share, value)
+
+country_correlations <- correlation_data |>
+  group_by(country, country_iso) |>
+  filter(n() >= 10) |>
+  summarise(
+    correlation = cor(internet_usage_share, value, method = "pearson"),
+    n_years     = n(),
+    .groups = "drop"
+  ) |>
+  arrange(desc(correlation))
+
+# Top 10 positive correlations
+cat("\n--- Top 10 Positive Correlations ---\n")
+print(head(country_correlations, 10))
+
+# Top 10 negative correlations
+cat("\n--- Top 10 Negative Correlations ---\n")
+print(tail(country_correlations, 10))
+
+# Scatter plot
+
+correlation_data |>
+  ggplot(aes(x = internet_usage_share, y = value)) +
+  geom_point(alpha = 0.2, color = "steelblue") +
+  geom_smooth(method = "lm", color = "red", se = TRUE) +
+  labs(
+    title = "Internet Usage vs GDP Growth (1995–2023)",
+    subtitle = paste("Overall Pearson r =", round(overall_cor, 3)),
+    x = "Internet Usage Share (%)",
+    y = "GDP Growth Rate (%)"
+  ) +
+  theme_minimal()
+
+```
 
 ```{r}
 library(tmap)
