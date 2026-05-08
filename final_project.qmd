@@ -224,12 +224,10 @@ print(GDP_2023_Remove_Regions_df)
 ```{r}
 top_20_avg_gdp_growth_clean <- top_20_avg_gdp_growth_df %>%
   mutate(
-    "Average Annual Change (billions)" = average_change/1000000000
+    "Average Annual Change in USD (billions)" = average_change/1000000000
   ) %>%
-  rename(Country = country.x,
-         "Start Year" = date.x,
-         "End Year" = date.y) %>%
-  select(-country.y, -indicator.x, -indicator.y, -value_1995, -value_2023, -change_in_gdp, -average_change)
+  rename(Country = country.x) %>%
+  select(-country.y, -indicator.x, -indicator.y, -value_1995, -value_2023, -change_in_gdp, -average_change, -date.x, -date.y)
 
 top_20_avg_gdp_growth_clean
 ```
