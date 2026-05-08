@@ -293,78 +293,69 @@ correlation_data |>
 
 ```
 
-```{r}
-library(tmap)
-library(sf)
-library(rnaturalearth)
-library(rnaturalearthdata)
-library(tidyverse)
 
-world <- ne_countries(scale = "medium", returnclass = "sf")
 
-map_data_2023 <- world |>
+```{r, fig.width=18, fig.height=10}
+selected_years <- c(1995, 2005, 2015, 2023)
+
+world_years <- world[rep(seq_len(nrow(world)), times = length(selected_years)), ]
+world_years$date <- rep(selected_years, each = nrow(world))
+
+map_data_over_years <- world_years |>
   left_join(
     final_data |>
-      filter(date == 2023) |>
-      select(country_iso, country, internet_usage_share),
-    by = c("iso_a3" = "country_iso")
-  )
+      filter(date %in% selected_years) |>
+      select(country_iso, date, internet_usage_share, value.y),
+    by = c("iso_a3" = "country_iso", "date" = "date")
+  ) |>
+  group_by(date) |>
+  mutate(
+    internet_group = ifelse(
+      internet_usage_share >= median(internet_usage_share, na.rm = TRUE),
+      "High Internet",
+      "Low Internet"
+    ),
+    gdp_growth_group = ifelse(
+      value.y >= median(value.y, na.rm = TRUE),
+      "High GDP Growth",
+      "Low GDP Growth"
+    ),
+    internet_gdp_group = ifelse(
+      is.na(internet_usage_share) | is.na(value.y),
+      NA,
+      paste(internet_group, gdp_growth_group, sep = " + ")
+    )
+  ) |>
+  ungroup()
 
 tmap_mode("plot")
 
-tm_shape(map_data_2023) +
+tmap_options(component.autoscale = FALSE)
+
+tm_shape(map_data_over_years) +
   tm_polygons(
-    "internet_usage_share",
-    title = "Internet Usage (%)",
-    style = "quantile",
-    palette = "YlGnBu",
-    colorNA = "gray90",
+    "internet_gdp_group",
+    title = "Internet Access and GDP Growth",
+    colorNA = "brown",
     textNA = "No data"
   ) +
+  tm_facets(
+    by = "date",
+    ncol = 2
+  ) +
   tm_layout(
-    title = "Internet Usage by Country, 2023",
-    title.size = 0.8,
-    title.position = c("center", "top"),
-    inner.margins = c(0.02, 0.02, 0.18, 0.02),
+    main.title = "Internet Access and GDP Growth Over Time",
+    main.title.size = 1.2,
+    main.title.position = "center",
+    panel.label.size = 1.1,
     legend.outside = TRUE,
+    legend.outside.position = "right",
+    legend.title.size = 0.9,
+    legend.text.size = 0.8,
+    inner.margins = c(0.01, 0.01, 0.01, 0.01),
+    outer.margins = c(0.02, 0.02, 0.02, 0.02),
     frame = FALSE
   )
 ```
-```{r}
-library(tmap)
-library(sf)
-library(rnaturalearth)
-library(rnaturalearthdata)
-library(tidyverse)
 
-world <- ne_countries(scale = "medium", returnclass = "sf")
-
-map_data_2023_gdp <- world |>
-  left_join(
-    Changed_GDP_Average |>
-      filter(date.y == 2023) |>
-      select(country_iso, country.x, average_change),
-    by = c("iso_a3" = "country_iso")
-  )
-
-tmap_mode("plot")
-
-tm_shape(map_data_2023_gdp) +
-  tm_polygons(
-    "average_change",
-    title = "Average GDP Change)",
-    style = "quantile",
-    palette = "YlGnBu",
-    colorNA = "gray90",
-    textNA = "No data"
-  ) +
-  tm_layout(
-    title = "Average GDP Change by Country, 2023",
-    title.size = 0.8,
-    title.position = c("center", "top"),
-    inner.margins = c(0.02, 0.02, 0.18, 0.02),
-    legend.outside = TRUE,
-    frame = FALSE
-  )
-```
 
