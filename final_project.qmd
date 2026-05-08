@@ -163,6 +163,12 @@ print(GDP_1995_df)
 
 ```
 ```{r}
+GDP_1995_Remove_Regions_df <- GDP_1995_df[-(1:49), ]
+print(GDP_1995_Remove_Regions_df)
+```
+
+
+```{r}
 library(httr2)
 library(xml2)
 library(tidyverse)
@@ -188,9 +194,15 @@ GDP_2023_df <- tibble(
 print(GDP_2023_df)
 ```
 ```{r}
-  Changed_GDP <- GDP_1995_df |>
-  left_join(GDP_2023_df, by = c("country_iso"))
-  view(Changed_GDP)
+GDP_2023_Remove_Regions_df <- GDP_2023_df[-(1:49), ]
+print(GDP_2023_Remove_Regions_df)
+```
+
+
+```{r}
+  Changed_GDP <- GDP_1995_Remove_Regions_df |>
+  left_join(GDP_2023_Remove_Regions_df, by = c("country_iso"))
+  print(Changed_GDP)
 ```
 ```{r}
   Changed_GDP_Average <- Changed_GDP |>
@@ -198,7 +210,7 @@ print(GDP_2023_df)
       change_in_gdp = value_2023 - value_1995,
       average_change = change_in_gdp / 28
     )
-  view(Changed_GDP_Average)
+  print(Changed_GDP_Average)
 ```
 
 ```{r}
