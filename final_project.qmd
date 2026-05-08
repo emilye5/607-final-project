@@ -250,3 +250,79 @@ bottom_avg_gdp_growth_clean <- bottom_avg_growth_df %>%
 bottom_avg_gdp_growth_clean
 
 ```
+
+```{r}
+library(tmap)
+library(sf)
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(tidyverse)
+
+world <- ne_countries(scale = "medium", returnclass = "sf")
+
+map_data_2023 <- world |>
+  left_join(
+    final_data |>
+      filter(date == 2023) |>
+      select(country_iso, country, internet_usage_share),
+    by = c("iso_a3" = "country_iso")
+  )
+
+tmap_mode("plot")
+
+tm_shape(map_data_2023) +
+  tm_polygons(
+    "internet_usage_share",
+    title = "Internet Usage (%)",
+    style = "quantile",
+    palette = "YlGnBu",
+    colorNA = "gray90",
+    textNA = "No data"
+  ) +
+  tm_layout(
+    title = "Internet Usage by Country, 2023",
+    title.size = 0.8,
+    title.position = c("center", "top"),
+    inner.margins = c(0.02, 0.02, 0.18, 0.02),
+    legend.outside = TRUE,
+    frame = FALSE
+  )
+```
+```{r}
+library(tmap)
+library(sf)
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(tidyverse)
+
+world <- ne_countries(scale = "medium", returnclass = "sf")
+
+map_data_2023_gdp <- world |>
+  left_join(
+    Changed_GDP_Average |>
+      filter(date.y == 2023) |>
+      select(country_iso, country.x, average_change),
+    by = c("iso_a3" = "country_iso")
+  )
+
+tmap_mode("plot")
+
+tm_shape(map_data_2023_gdp) +
+  tm_polygons(
+    "average_change",
+    title = "Average GDP Change)",
+    style = "quantile",
+    palette = "YlGnBu",
+    colorNA = "gray90",
+    textNA = "No data"
+  ) +
+  tm_layout(
+    title = "Average GDP Change by Country, 2023",
+    title.size = 0.8,
+    title.position = c("center", "top"),
+    inner.margins = c(0.02, 0.02, 0.18, 0.02),
+    legend.outside = TRUE,
+    frame = FALSE
+  )
+```
+
