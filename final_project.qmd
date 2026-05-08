@@ -59,7 +59,6 @@ bottom_20_gdp_growth_df <- head(bottom_growth_df, 20)
 glimpse(bottom_20_gdp_growth_df)
 ```
 
-
 ```{r}
 library(httr2)
 library(xml2)
@@ -162,11 +161,11 @@ GDP_1995_df <- tibble(
 print(GDP_1995_df)
 
 ```
+
 ```{r}
 GDP_1995_Remove_Regions_df <- GDP_1995_df[-(1:49), ]
 print(GDP_1995_Remove_Regions_df)
 ```
-
 
 ```{r}
 library(httr2)
@@ -193,17 +192,18 @@ GDP_2023_df <- tibble(
 
 print(GDP_2023_df)
 ```
+
 ```{r}
 GDP_2023_Remove_Regions_df <- GDP_2023_df[-(1:49), ]
 print(GDP_2023_Remove_Regions_df)
 ```
-
 
 ```{r}
   Changed_GDP <- GDP_1995_Remove_Regions_df |>
   left_join(GDP_2023_Remove_Regions_df, by = c("country_iso"))
   print(Changed_GDP)
 ```
+
 ```{r}
   Changed_GDP_Average <- Changed_GDP |>
     mutate(
@@ -232,3 +232,21 @@ top_20_avg_gdp_growth_clean <- top_20_avg_gdp_growth_df %>%
 top_20_avg_gdp_growth_clean
 ```
 
+```{r}
+ bottom_avg_growth_df <- Changed_GDP_Average |>
+     arrange(average_change)
+bottom_20_avg_gdp_growth_df <- head(bottom_avg_growth_df, 20)
+bottom_20_avg_gdp_growth_df
+```
+
+```{r}
+bottom_avg_gdp_growth_clean <- bottom_avg_growth_df %>%
+  mutate(
+    "Average Annual Change in USD (billions)" = average_change/1000000000
+  ) %>%
+  rename(Country = country.x) %>%
+  select(-country.y, -indicator.x, -indicator.y, -value_1995, -value_2023, -change_in_gdp, -average_change, -date.x, -date.y)
+
+bottom_avg_gdp_growth_clean
+
+```
