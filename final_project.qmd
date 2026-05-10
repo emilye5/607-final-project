@@ -15,7 +15,7 @@ To answer this question, we will integrate data from the online dataset [Share o
 
 The workflow for this project will include: cleaning the internet access data from the CSV, and conducting statistical analyses to investigate the correlation between internet access and GDP growth over time. Possible hurdles that we might encounter could be misalignment between the CSV data and the data found in the API, missing data for some countries, and having to filter through the API data, which is very large.
 
-## Fetching the GDP Data from the World Bank API
+### Packages and Libraries
 
 ```{r}
 library(httr2)
@@ -24,6 +24,13 @@ library(tidyverse)
 library(tmap)
 library(sf)
 library(rnaturalearth)
+```
+
+...
+
+### Fetching the GDP Data from the World Bank API
+
+```{r}
 
 req <- request("https://api.worldbank.org/v2/country/all/indicator/NY.GDP.MKTP.KD.ZG") |>
   req_url_query(
@@ -43,8 +50,12 @@ GDP_growth_df <- tibble(
   indicator   = records |> xml_find_first(".//*[local-name()='indicator']") |> xml_text()
 )
 
-print(GDP_growth_df)
+head(GDP_growth_df)
 ```
+
+...
+
+### Exploring GDP Growth Trends
 
 ```{r}
 top_growth_df <- GDP_growth_df |>
@@ -62,36 +73,10 @@ bottom_20_gdp_growth_df <- head(bottom_growth_df, 20)
 glimpse(bottom_20_gdp_growth_df)
 ```
 
-```{r}
-req <- request("https://api.worldbank.org/v2/country/all/indicator/SL.GDP.PCAP.EM.KD") |>
-  req_url_query(
-    date = "1995:2023", 
-    per_page = 32500
-  )
-resp <- req |> req_perform()
-xml_data <- resp |> resp_body_xml()
+...
 
-records <- xml_find_all(xml_data, "//*[local-name()='data' and *[local-name()='indicator']]")
 
-GDP_per_person_df <- tibble(
-  country     = records |> xml_find_first(".//*[local-name()='country']") |> xml_text(),
-  country_iso = records |> xml_find_first(".//*[local-name()='countryiso3code']") |> xml_text(),
-  date        = records |> xml_find_first(".//*[local-name()='date']") |> xml_integer(),
-  value       = records |> xml_find_first(".//*[local-name()='value']") |> xml_double(),
-  indicator   = records |> xml_find_first(".//*[local-name()='indicator']") |> xml_text()
-)
-
-print(GDP_per_person_df)
-```
-
-```{r}
-top_GDP_per_person_df <- GDP_per_person_df |>
-  arrange(desc(value))
-
-head(top_GDP_per_person_df, 5)
-```
-
-## Internet Access CSV Cleaning/ Exploration
+### Internet Access Data Cleaning/ Exploration
 
 ```{r}
 #read csv
@@ -113,6 +98,11 @@ internet_data_clean <- internet_data %>%
 glimpse(internet_data_clean)
 #check how many distinct countries are included in the data
 n_distinct(internet_data_clean$country)
+```
+
+### Distribution of Internet Usage Over time
+
+```{r}
 #boxplot showing the distribution of internet usage by year
 internet_data_clean %>%
   ggplot(aes(x = factor(date), y = internet_usage_share)) +
@@ -125,13 +115,20 @@ internet_data_clean %>%
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
+...
+
+### Merging Internet & GDP Data
+
 ```{r}
 final_data <- internet_data_clean |>
-  left_join(GDP_per_person_df, by = c("country_iso", "date")) |>
   left_join(GDP_growth_df, by = c("country_iso", "date"))
 
 final_data
 ```
+
+### Fetching GDP Data from 1995 & 2023
+
+1995: 
 
 ```{r}
 req <- request("https://api.worldbank.org/v2/country/all/indicator/NY.GDP.MKTP.CD") |>
@@ -160,6 +157,9 @@ print(GDP_1995_df)
 GDP_1995_Remove_Regions_df <- GDP_1995_df[-(1:49), ]
 print(GDP_1995_Remove_Regions_df)
 ```
+...
+
+2023: 
 
 ```{r}
 req <- request("https://api.worldbank.org/v2/country/all/indicator/NY.GDP.MKTP.CD") |>
@@ -193,6 +193,9 @@ print(GDP_2023_Remove_Regions_df)
   left_join(GDP_2023_Remove_Regions_df, by = c("country_iso"))
   print(Changed_GDP)
 ```
+...
+
+### Calculating the Average Change in GDP by Country
 
 ```{r}
   Changed_GDP_Average <- Changed_GDP |>
@@ -202,6 +205,9 @@ print(GDP_2023_Remove_Regions_df)
     )
   print(Changed_GDP_Average)
 ```
+...
+
+### Top 20 Countries Ranked by Average GDP Growth
 
 ```{r}
   top_avg_growth_df <- Changed_GDP_Average |>
@@ -222,6 +228,8 @@ top_20_avg_gdp_growth_clean <- top_20_avg_gdp_growth_df %>%
 top_20_avg_gdp_growth_clean
 ```
 
+### Bottom 20 Countries Ranked by Average GDP Growth
+
 ```{r}
  bottom_avg_growth_df <- Changed_GDP_Average |>
      arrange(average_change)
@@ -240,10 +248,11 @@ bottom_avg_gdp_growth_clean <- bottom_avg_growth_df %>%
 bottom_avg_gdp_growth_clean
 
 ```
-# Scatter plot: internet usage vs GDP growth (all countries, all years)
+
+
+### Calculating the Correlation Betweeen GDP and Internet Usage
 
 ```{r}
-
 correlation_data <- internet_data_clean |>
   inner_join(GDP_growth_df, by = c("country_iso", "date")) |>
   rename(country = country.x) |>  # resolve the .x/.y conflict after join
@@ -255,6 +264,7 @@ overall_cor <- cor(
   method = "pearson",
   use = "complete.obs"
 )
+print(overall_cor)
 
 country_correlations <- correlation_data |>
   group_by(country, country_iso) |>
@@ -265,7 +275,10 @@ country_correlations <- correlation_data |>
     .groups = "drop"
   ) |>
   arrange(desc(correlation))
+```
+### Countries with the top 10 positive & top 10 negative correlations between internet usage and GDP
 
+```{r}
 # Top 10 positive correlations
 cat("\n--- Top 10 Positive Correlations ---\n")
 print(head(country_correlations, 10))
@@ -273,7 +286,12 @@ print(head(country_correlations, 10))
 # Top 10 negative correlations
 cat("\n--- Top 10 Negative Correlations ---\n")
 print(tail(country_correlations, 10))
+```
+... 
 
+### Scatter plot: internet usage vs GDP growth (all countries, all years)
+
+```{r}
 # Scatter plot
 
 correlation_data |>
@@ -289,6 +307,9 @@ correlation_data |>
   theme_minimal()
 
 ```
+...
+
+### Mapping Internet Usage Over Time
 
 ```{r, fig.width=15, fig.height=9}
 
@@ -337,7 +358,7 @@ tm_shape(map_internet_over_years) +
     frame = FALSE
   )
 ```
-
+### Mapping Internet Access and GDP Growth Over Time
 
 ```{r, fig.width=18, fig.height=10}
 world <- ne_countries(scale = "medium", returnclass = "sf")
@@ -351,7 +372,7 @@ map_data_over_years <- world_years |>
   left_join(
     final_data |>
       filter(date %in% selected_years) |>
-      select(country_iso, date, internet_usage_share, value.y),
+      select(country_iso, date, internet_usage_share, value),
     by = c("iso_a3" = "country_iso", "date" = "date")
   ) |>
   group_by(date) |>
@@ -362,12 +383,12 @@ map_data_over_years <- world_years |>
       "Low Internet"
     ),
     gdp_growth_group = ifelse(
-      value.y >= median(value.y, na.rm = TRUE),
+      value >= median(value, na.rm = TRUE),
       "High GDP Growth",
       "Low GDP Growth"
     ),
     internet_gdp_group = ifelse(
-      is.na(internet_usage_share) | is.na(value.y),
+      is.na(internet_usage_share) | is.na(value),
       NA,
       paste(internet_group, gdp_growth_group, sep = " + ")
     )
@@ -403,3 +424,4 @@ tm_shape(map_data_over_years) +
     frame = FALSE
   )
 ```
+## Conclusion
