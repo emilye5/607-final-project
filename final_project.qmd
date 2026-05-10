@@ -1,6 +1,6 @@
 ---
 title: "Data 607 Final Project: Population Internet Access and Economic Growth"
-authors: "Emily El Mouaquite, Long Lin, Pascal Hermann Kouogang Tafo, Ziaho Yu"
+authors: "Emily El Mouaquite, Long Lin, Pascal Hermann Kouogang Tafo, Zihao Yu"
 format: html
 editor: visual
 ---
@@ -21,12 +21,10 @@ The workflow for this project will include: cleaning the internet access data fr
 library(httr2)
 library(xml2)
 library(tidyverse)
-library(tmap)
-library(sf)
-library(rnaturalearth)
+library(tmap) #used for creating maps
+library(sf) #used for tmap coordinates 
+library(rnaturalearth) #provides map vectors for creating tmaps
 ```
-
-...
 
 ### Fetching the GDP Data from the World Bank API
 
@@ -52,29 +50,6 @@ GDP_growth_df <- tibble(
 
 head(GDP_growth_df)
 ```
-
-...
-
-### Exploring GDP Growth Trends
-
-```{r}
-top_growth_df <- GDP_growth_df |>
-  arrange(desc(value))
-
-top_20_gdp_growth_df <- head(top_growth_df, 20)
-glimpse(top_20_gdp_growth_df)
-```
-
-```{r}
-bottom_growth_df <- GDP_growth_df |>
-  arrange(value)
-
-bottom_20_gdp_growth_df <- head(bottom_growth_df, 20)
-glimpse(bottom_20_gdp_growth_df)
-```
-
-...
-
 
 ### Internet Access Data Cleaning/ Exploration
 
@@ -115,7 +90,7 @@ internet_data_clean %>%
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-...
+In order to validate our internet usage data we created the above boxplot, which shows an increase in internet usage per year. The median half of the data increases in percentage of internet usage each year, with fewer outliers over time.
 
 ### Merging Internet & GDP Data
 
@@ -123,12 +98,12 @@ internet_data_clean %>%
 final_data <- internet_data_clean |>
   left_join(GDP_growth_df, by = c("country_iso", "date"))
 
-final_data
+head(final_data)
 ```
 
 ### Fetching GDP Data from 1995 & 2023
 
-1995: 
+1995:
 
 ```{r}
 req <- request("https://api.worldbank.org/v2/country/all/indicator/NY.GDP.MKTP.CD") |>
@@ -157,9 +132,8 @@ print(GDP_1995_df)
 GDP_1995_Remove_Regions_df <- GDP_1995_df[-(1:49), ]
 print(GDP_1995_Remove_Regions_df)
 ```
-...
 
-2023: 
+2023:
 
 ```{r}
 req <- request("https://api.worldbank.org/v2/country/all/indicator/NY.GDP.MKTP.CD") |>
@@ -193,7 +167,8 @@ print(GDP_2023_Remove_Regions_df)
   left_join(GDP_2023_Remove_Regions_df, by = c("country_iso"))
   print(Changed_GDP)
 ```
-...
+
+We removed the first 49 observations from the dataframe because the World Bank API includes world regions, which are not a part of our internet usage data.
 
 ### Calculating the Average Change in GDP by Country
 
@@ -205,7 +180,6 @@ print(GDP_2023_Remove_Regions_df)
     )
   print(Changed_GDP_Average)
 ```
-...
 
 ### Top 20 Countries Ranked by Average GDP Growth
 
@@ -223,6 +197,7 @@ top_20_avg_gdp_growth_clean <- top_20_avg_gdp_growth_df %>%
     "Average Annual Change in USD (billions)" = average_change/1000000000
   ) %>%
   rename(Country = country.x) %>%
+  #columns cleaned to remove date and indicator (always the same)
   select(-country.y, -indicator.x, -indicator.y, -value_1995, -value_2023, -change_in_gdp, -average_change, -date.x, -date.y)
 
 top_20_avg_gdp_growth_clean
@@ -242,13 +217,13 @@ bottom_avg_gdp_growth_clean <- bottom_avg_growth_df %>%
   mutate(
     "Average Annual Change in USD (billions)" = average_change/1000000000
   ) %>%
+  #columns cleaned to remove date and indicator (always the same)
   rename(Country = country.x) %>%
   select(-country.y, -indicator.x, -indicator.y, -value_1995, -value_2023, -change_in_gdp, -average_change, -date.x, -date.y)
 
 bottom_avg_gdp_growth_clean
 
 ```
-
 
 ### Calculating the Correlation Betweeen GDP and Internet Usage
 
@@ -276,6 +251,9 @@ country_correlations <- correlation_data |>
   ) |>
   arrange(desc(correlation))
 ```
+
+The Pearson Correlation Coefficient is -0.159. That indicates a very weak inverse linear relationship between Internet Usage and Annual GDP Growth. Moreover the effect size is small suggesting the relationship is not practically meaningful.
+
 ### Countries with the top 10 positive & top 10 negative correlations between internet usage and GDP
 
 ```{r}
@@ -287,7 +265,6 @@ print(head(country_correlations, 10))
 cat("\n--- Top 10 Negative Correlations ---\n")
 print(tail(country_correlations, 10))
 ```
-... 
 
 ### Scatter plot: internet usage vs GDP growth (all countries, all years)
 
@@ -307,7 +284,38 @@ correlation_data |>
   theme_minimal()
 
 ```
-...
+
+To answer our main research question, we decided to generate a Scatter Plot and compute the Pearson Correlation to specifically quantify how strongly “Internet Usage” and the “ Annual GDP Growth” in all countries move together in a linear direction.
+
+### Correlation Between Internet Usage and GDP by Year
+
+```{r}
+yearly_correlation <- final_data |>
+  drop_na(internet_usage_share, value) |>
+  group_by(date) |>
+  summarize(
+    correlation = cor(internet_usage_share, value, method = "pearson"),
+    n_countries = n(),
+    .groups = "drop"
+  )
+
+yearly_correlation
+
+yearly_correlation |>
+  ggplot(aes(x = date, y = correlation)) +
+  geom_line(color = "steelblue") +
+  geom_point(color = "steelblue") +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  labs(
+    title = "Yearly Correlation Between Internet Usage and GDP Growth",
+    x = "Year",
+    y = "Pearson Correlation"
+  ) +
+  theme_minimal()
+
+```
+
+The yearly correlation results show that the relationship between internet usage and GDP growth is not stable over time. Most years show weak or negative correlations, which suggests that higher internet usage is not consistently associated with higher GDP growth. This means that the association between internet usage and GDP growth is not consistent, and does not show a clear causal relationship.
 
 ### Mapping Internet Usage Over Time
 
@@ -358,6 +366,9 @@ tm_shape(map_internet_over_years) +
     frame = FALSE
   )
 ```
+
+These maps show the global spread of internet usage from 1995 to 2023. Internet usage was limited in many countries in 1995, but by 2023, most regions show much higher levels of internet access.
+
 ### Mapping Internet Access and GDP Growth Over Time
 
 ```{r, fig.width=18, fig.height=10}
@@ -424,4 +435,9 @@ tm_shape(map_data_over_years) +
     frame = FALSE
   )
 ```
+
+These maps compare countries by whether they are above or below the yearly median for internet usage and GDP growth. It shows that the relationship between internet access and GDP growth varies between countries and years, rather than following one clear global pattern.
+
 ## Conclusion
+
+Our findings suggest a weak inverse linear relationship between internet usage and GDP growth. The overall Pearson correlation is -0.159, which is close to 0 and indicates only a weak association. This means the data does not show a strong relationship between countries’ internet access and their GDP growth, meaning that internet usage, by itself, is not a significant enough parameter to determine the growth of a country's GDP. Therefore, this correlation analysis does not provide evidence that higher internet access is clearly associated with higher GDP growth.
